@@ -60,6 +60,98 @@ Elasticsearch를 시각화할 수 있는 도구이다.
 
 
 
+## 3. Elasticsearch 시스템 구조
+
+### 3-1. 클러스터 구성
+
+Elasticsearch의 노드들은 클라이언트와의 통신을 위한 http 포트(9200~9299), 노드 간의 데이터 교환을 위한 tcp 포트 (9300~9399) 총 2개의 네트워크 통신을 열어두고 있다.
+
+#### 여러 서버에 하나의 클러스터로 실행
+
+- 3개의 다른 물리 서버에서 각각 1개 씩의 노드 실행
+<img width="640" alt="cluster1" src="https://user-images.githubusercontent.com/55284181/123535978-97e3fd00-d762-11eb-9e1e-0275c7cabde5.png">
+
+- 서버1 에서 두개의 노드를 실행하고, 서버2 에서 한개의 노드를 실행
+<img width="640" alt="cluster2" src="https://user-images.githubusercontent.com/55284181/123536001-bf3aca00-d762-11eb-9b61-afef9e2aa5dc.png">
+
+#### 하나의 서버에서 여러 클러스터 실행
+
+- 하나의 물리 서버에서 서로 다른 두 개의 클러스터 실행
+![cluster3](https://user-images.githubusercontent.com/55284181/123536068-fc9f5780-d762-11eb-8a00-58d644486018.png)
+
+node-1과 node-2는 하나의 클러스터로 묶여있기 때문에 데이터 교환이 일어난다.
+하지만 node-3은 클러스터가 다르기 때문에 node-1, node-2와 같은 클러스터로 바인딩 되지 않는다. node-1, node-2에 입력된 데이터를 node-3 에서 읽을 수 없다.
+
+#### 디스커버리 (Discovery)
+
+노드가 처음 실행 될 때 같은 서버의 다른 노드들을 찾아 하나의 클러스터로 바인딩 하는 과정
+
+<img width="640" alt="discovery" src="https://user-images.githubusercontent.com/55284181/123536210-e776f880-d763-11eb-814f-553c1dc81a86.png">
+
+
+
+### 3-2. 인덱스와 샤드 - Index & Sards
+
+- **색인 (indexing)** : 데이터를 Elasticsearch에 저장하는 행위
+- **도큐먼트 (document)** : 단일 데이터 단위
+- **인덱스 (Index)** : 도큐먼트를 모아놓은 집합
+- **샤드 (shard)** : 인덱스가 분리되는 단위. 각 노드에 분산되어 저장됨.
+
+#### 프라이머리 샤드 (Primary Shard)와 복제본(Replica)
+- 클러스터에 노드를 추가하게 되면 샤드들이 각 노드들로 분산되고 디폴트로 1개의 복제본을 생성한다.
+    - 프라이머리 샤드 : 처음 생성된 샤드
+    - 리플리카 : 복제본
+
+    ex1) 한 인덱스가 5개의 샤드로 구성되어 있고, 한 클러스터가 4개의 노드로 구성되어 있다고 가정하면 각각 5개의 프라이머리 샤드와 복제본, 총 10개의 샤드들이 전체 노드에 골고루 분배되어 저장된다.
+
+    - 5개의 프라이머리 샤드와 복제본이 4개의 노드에 분산되어 저장
+    <img width="640" alt="shard" src="https://user-images.githubusercontent.com/55284181/123536324-99aec000-d764-11eb-88b2-aee46301171d.png">
+
+- 같은 샤드와 복제본은 동일한 데이터를 담고 있으며 반드시 서로 다른 노드에 저장된다.
+
+    ex2) Node-3 노드가 시스템 다운이나 네트워크 단절등으로 사라지면 이 클러스터는 Node-3 에 있던 0번과 4번 샤드들을 유실하게 된다. 클러스터는 유실된 노드가 복구 되기를 기다리다가 타임아웃이 지나면 Elasticsearch는 0번, 4번 샤드들의 복제를 시작한다.
+
+    - node-3 노드가 유실되어 0번, 4번 샤드가 다른 노드에 복제본을 새로 생성
+    ![shard2](https://user-images.githubusercontent.com/55284181/123536523-ad0e5b00-d765-11eb-8650-dbec7ccc7672.png)
+
+#### 샤드 개수 설정
+프라이머리 샤드 수는 인덱스를 처음 생성할 때 지정하며, 인덱스를 재색인 하지 않는 이상 바꿀 수 없다. 복제본의 개수는 나중에 변경이 가능하다.
+
+ex) 4개의 노드를 가진 클러스터에 프라이머리 샤드 5개, 복제본 1개인 books 인덱스, 그리고 프라이머리 샤드 3개 복제본 0개인 magazines 인덱스가 있을 때 전체 샤드 배치
+![shard3](https://user-images.githubusercontent.com/55284181/123536675-c5cb4080-d766-11eb-90a8-d13a263f1f0f.png)
+
+
+
+### 3-3. 마스터 노드와 데이터 노드 - Master & Data Nodes
+
+#### 마스터 노드 (Master Node)
+인덱스의 메타 데이터, 샤드의 위치와 같은 클러스터 상태(Cluster Status) 정보를 관리한다.
+
+기본적으로는 모든 노드가 마스터 노드로 선출될 수 있는 **마스터 후보 노드 (master eligible node)** 이다.
+
+클러스터가 커져서 노드와 샤드들의 개수가 많아지게 되면, 마스터 노드의 역할을 수행 할 후보 노드들만 따로 설정해서 유지하는 것이 전체 클러스터 성능에 도움이 될 수 있다.
+
+#### 데이터 노드 (Data Node)
+실제로 색인된 데이터를 저장하고 있는 노드이다.
+
+- 마스터 역할만 실행하는 노드
+```
+node.master: true
+node.data: false
+```
+
+- 데이터 처리 역할만 실행하는 노드
+```
+node.master: false
+node.data: true
+```
+
+#### Split Brain
+
+
+
+
+
 ---
 #### 참조 URL
 - <https://17billion.github.io/elastic/2017/06/30/elastic_stack_overview.html>
