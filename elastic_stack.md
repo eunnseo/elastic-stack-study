@@ -69,15 +69,18 @@ Elasticsearch의 노드들은 클라이언트와의 통신을 위한 http 포트
 #### 여러 서버에 하나의 클러스터로 실행
 
 - 3개의 다른 물리 서버에서 각각 1개 씩의 노드 실행
-<img width="640" alt="cluster1" src="https://user-images.githubusercontent.com/55284181/123535978-97e3fd00-d762-11eb-9e1e-0275c7cabde5.png">
+    
+    <img width="640" alt="cluster1" src="https://user-images.githubusercontent.com/55284181/123535978-97e3fd00-d762-11eb-9e1e-0275c7cabde5.png">
 
 - 서버1 에서 두개의 노드를 실행하고, 서버2 에서 한개의 노드를 실행
-<img width="640" alt="cluster2" src="https://user-images.githubusercontent.com/55284181/123536001-bf3aca00-d762-11eb-9b61-afef9e2aa5dc.png">
+    
+    <img width="640" alt="cluster2" src="https://user-images.githubusercontent.com/55284181/123536001-bf3aca00-d762-11eb-9b61-afef9e2aa5dc.png">
 
 #### 하나의 서버에서 여러 클러스터 실행
 
 - 하나의 물리 서버에서 서로 다른 두 개의 클러스터 실행
-![cluster3](https://user-images.githubusercontent.com/55284181/123536068-fc9f5780-d762-11eb-8a00-58d644486018.png)
+    
+    ![cluster3](https://user-images.githubusercontent.com/55284181/123536068-fc9f5780-d762-11eb-8a00-58d644486018.png)
 
 node-1과 node-2는 하나의 클러스터로 묶여있기 때문에 데이터 교환이 일어난다.
 하지만 node-3은 클러스터가 다르기 때문에 node-1, node-2와 같은 클러스터로 바인딩 되지 않는다. node-1, node-2에 입력된 데이터를 node-3 에서 읽을 수 없다.
@@ -102,22 +105,21 @@ node-1과 node-2는 하나의 클러스터로 묶여있기 때문에 데이터 �
     - 프라이머리 샤드 : 처음 생성된 샤드
     - 리플리카 : 복제본
 
-    ex1) 한 인덱스가 5개의 샤드로 구성되어 있고, 한 클러스터가 4개의 노드로 구성되어 있다고 가정하면 각각 5개의 프라이머리 샤드와 복제본, 총 10개의 샤드들이 전체 노드에 골고루 분배되어 저장된다.
+    ex) 한 인덱스가 5개의 샤드로 구성되어 있고, 한 클러스터가 4개의 노드로 구성되어 있다고 가정한다. 각각 5개의 프라이머리 샤드와 복제본, 총 10개의 샤드들이 4개의 노드에 골고루 분배되어 저장된다.
 
-    - 5개의 프라이머리 샤드와 복제본이 4개의 노드에 분산되어 저장
     <img width="640" alt="shard" src="https://user-images.githubusercontent.com/55284181/123536324-99aec000-d764-11eb-88b2-aee46301171d.png">
 
 - 같은 샤드와 복제본은 동일한 데이터를 담고 있으며 반드시 서로 다른 노드에 저장된다.
 
-    ex2) Node-3 노드가 시스템 다운이나 네트워크 단절등으로 사라지면 이 클러스터는 Node-3 에 있던 0번과 4번 샤드들을 유실하게 된다. 클러스터는 유실된 노드가 복구 되기를 기다리다가 타임아웃이 지나면 Elasticsearch는 0번, 4번 샤드들의 복제를 시작한다.
+    ex) Node-3 노드가 시스템 다운이나 네트워크 단절등으로 사라지면 이 클러스터는 Node-3 에 있던 0번과 4번 샤드들을 유실하게 된다. 클러스터는 유실된 노드가 복구 되기를 기다리다가 타임아웃이 지나면 Elasticsearch는 0번, 4번 샤드들의 복제를 시작한다.
 
-    - node-3 노드가 유실되어 0번, 4번 샤드가 다른 노드에 복제본을 새로 생성
     ![shard2](https://user-images.githubusercontent.com/55284181/123536523-ad0e5b00-d765-11eb-8650-dbec7ccc7672.png)
 
 #### 샤드 개수 설정
 프라이머리 샤드 수는 인덱스를 처음 생성할 때 지정하며, 인덱스를 재색인 하지 않는 이상 바꿀 수 없다. 복제본의 개수는 나중에 변경이 가능하다.
 
 ex) 4개의 노드를 가진 클러스터에 프라이머리 샤드 5개, 복제본 1개인 books 인덱스, 그리고 프라이머리 샤드 3개 복제본 0개인 magazines 인덱스가 있을 때 전체 샤드 배치
+
 ![shard3](https://user-images.githubusercontent.com/55284181/123536675-c5cb4080-d766-11eb-90a8-d13a263f1f0f.png)
 
 
@@ -147,8 +149,17 @@ node.data: true
 ```
 
 #### Split Brain
+네트워크 단절로 마스터 후보 노드가 분리되면 각자의 클러스터에서 데이터 변경이 이루어질 수 있다.
+나중에 네트워크가 복구되고 하나의 클러스터로 다시 합쳐지게 되면, 데이터 정합성에 문제가 생기고 데이터 무결성이 유지될 수 없게 된다.
+이러한 문제를 **Split Brain** 이라고 한다.
 
+- Split Brain을 방지하기 위해 최소 마스터 후보 노드의 수를 ```(전체 마스터 후보 노드 / 2) + 1``` 개로 설정해야 한다.
 
+- 클러스터 분리 시 마스터 노드가 절반 이상인 클러스터만 생존한다.
+    
+    ex) 아래의 경우 데이터는 node-4, node-5의 데이터만 사용이 가능하고 node-6은 네트워크가 복구될 때까지 동작하지 않고 노드가 분리되기 이전 상태 그대로 유지된다.
+
+    ![split_brain](https://user-images.githubusercontent.com/55284181/123544798-e0fe7600-d78f-11eb-8d23-379410ff7f8c.png)
 
 
 
