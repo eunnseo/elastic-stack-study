@@ -124,6 +124,17 @@ node-1과 node-2는 하나의 클러스터로 묶여있기 때문에 데이터 �
 
     ![shard3](https://user-images.githubusercontent.com/55284181/123536675-c5cb4080-d766-11eb-90a8-d13a263f1f0f.png)
 
+#### 샤드의 크기가 어떻게 성능에 영향을 미치나요?
+- 용어 정리
+    - 리프레쉬(refresh) 작업 : 데이터를 샤드에 입력할 때, Elasticsearch는 주기적으로 디스크에 불변의 루씬 **세그먼트** 형태로 저장(publish)하며, 이 작업 이후에 조회가 가능해진다.
+
+    - 병합(merging) 작업 : 세그먼트의 개수가 많아지면, 주기적으로 더 큰 세그먼트로 병합된다. 병합 작업은 리소스에 무척 민감하며, 특히 디스크 I/O에 큰 영향을 받는다.
+
+    - 큰 샤드는 클러스터 장애가 발생했을 때 복구 능력에 좋지 않은 영향을 끼친다. 샤드 크기는 최대 **50GB**를 넘지 않는 것이 좋다.
+
+- 인덱스 보관 주기
+    - 데이터 보관 주기를 관리하기 위하여 **시간 기반 인덱스**를 사용하는 것이 좋다.
+
 
 ### 3-3. 마스터 노드와 데이터 노드 - Master & Data Nodes
 
@@ -170,3 +181,4 @@ node.data: true
 ---
 #### 참조 URL
 - <https://17billion.github.io/elastic/2017/06/30/elastic_stack_overview.html>
+- <https://www.elastic.co/kr/blog/how-many-shards-should-i-have-in-my-elasticsearch-cluster>
