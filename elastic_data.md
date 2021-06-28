@@ -7,22 +7,31 @@
 ### 4-1. REST API
 
 - 데이터 처리
-    - 입력 : ```PUT http://user.com/kim -d {"name":"kim", "age":38, "gender":"m"}```
+    - 입력
+    ```
+    PUT http://user.com/kim -d {"name":"kim", "age":38, "gender":"m"}
+    ```
 
-    - 조회 : ```GET http://user.com/kim```
+    - 조회
+    ```
+    GET http://user.com/kim
+    ```
 
-    - 삭제 : ```DELETE http://user.com/kim```
+    - 삭제
+    ```
+    DELETE http://user.com/kim
+    ```
 
 - 유닉스 기반 운영체제에서는 **curl** 명령어로 간편하게 REST API 사용이 가능하다.
 
-- Kibana Dev Tools
+- **Kibana Dev Tools**
     - ```bin/kibana```를 실행시키면 디폴트로 같은 호스트위 **localhost:9200**에서 실행중인 elasticsearch와 통신하며 실행된다.
 
-    - 기본적으로 Kibana는 5601 포트에서 실행된다.
+    - 기본적으로 Kibana는 **5601 포트**에서 실행된다.
 
     ![kibana_dev_tools](https://user-images.githubusercontent.com/55284181/123591966-9af4f100-d827-11eb-8c96-9b3dbb6e0cf5.png)
 
-### 4-1. CRUD - 입력, 조회, 수정, 삭제
+### 4-2. CRUD - 입력, 조회, 수정, 삭제
 
 - Elasticsearch에서는 단일 도큐먼트별로 고유한 URL을 갖는다.
 
@@ -30,9 +39,10 @@
 
 #### 입력 (PUT)
 
-- **PUT** 메서드로 데이터를 입력하낟.
+- **PUT** 메서드로 데이터를 입력한다.
 
 - my_index/_doc/1 최초 입력
+
     ```javascript
     // request
     PUT my_index/_doc/1
@@ -127,6 +137,8 @@
 
     - 도큐먼트 내용은 삭제되었지만 인덱스는 남아있는 상태가 된다.
 
+    - 인덱스는 있으나 도큐먼트가 없을 때 도큐먼트를 GET해서 가져오려고 하면 도큐먼트를 못 찾았다는 ```"found" : false``` 응답을 받는다.
+
     ```javascript
     // request
     DELETE my_index/_doc/1
@@ -139,11 +151,11 @@
     }
     ```
 
-    - 인덱스는 있으나 도큐먼트가 없을 때 도큐먼트를 GET해서 가져오려고 하면 도큐먼트를 못 찾았다는 ```"found" : false``` 응답을 받는다.
-
 - my_index 인덱스 전체 삭제
 
     - 전체 인덱스가 삭제된다.
+
+    - 삭제된 인덱스 또는 처음부터 없는 인덱스의 도큐먼트를 조회하려고 하면 ```"type" : "index_not_found_exception" , "status" : 404``` 오류가 리턴된다.
 
     ```javascript
     // request
@@ -157,15 +169,13 @@
     }
     ```
 
-    - 삭제된 인덱스 또는 처음부터 없는 인덱스의 도큐먼트를 조회하려고 하면 ```"type" : "index_not_found_exception" , "status" : 404``` 오류가 리턴된다.
-
 #### 수정 (POST)
 
 - **POST** 메서드는 PUT 메서드와 유사하게 데이터 입력에 사용이 가능하다.
 
-- POST 명령으로 my_index/_doc 도큐먼트 입력
+- ```POST <인덱스>/_doc``` 까지만 입력하게 되면 자동으로 임의의 도큐먼트id 가 생성된다.
 
-    - ```<인덱스>/_doc``` 까지만 입력하게 되면 자동으로 임의의 도큐먼트id 가 생성된다.
+- POST 명령으로 my_index/_doc 도큐먼트 입력
 
     ```javascript
     // request
@@ -188,9 +198,9 @@
 
 - ```POST <인덱스>/_update/<도큐먼트 id>``` 명령을 이용해 원하는 필드의 내용만 업데이트가 가능하다.
 
-- my_index/_update/1 도큐먼트의 message 필드 업데이트
+- _update API 를 사용해서 단일 필드만 수정하는 경우에도 실제로 내부에서는 도큐먼트 전체 내용을 가져와서 _doc 에서 지정한 내용을 변경한 새 도큐먼트를 만든 뒤 전체 내용을 다시 PUT 으로 입력하는 작업을 진행한다.
 
-    - _update API 를 사용해서 단일 필드만 수정하는 경우에도 실제로 내부에서는 도큐먼트 전체 내용을 가져와서 _doc 에서 지정한 내용을 변경한 새 도큐먼트를 만든 뒤 전체 내용을 다시 PUT 으로 입력하는 작업을 진행한다.
+- my_index/_update/1 도큐먼트의 message 필드 업데이트
 
     ```javascript
     // request
@@ -288,7 +298,7 @@
 
     형식 : ```GET test/_search?q=<검색어> <조건> <검색어>```
 
-- 검색어 value 을 field 필드에서 찾고 싶으면 ```<필드명>:<검색어>``` 형태로 검색이 가능하다.
+- 검색어 value 을 **field 필드**에서 찾고 싶으면 <필드명>:<검색어> 형태로 검색이 가능하다.
 
     형식 : ```GET test/_search?q=<필드명>:<검색어>```
 
@@ -329,19 +339,189 @@
 
 
 
+## 5. 검색과 쿼리 - Query DSL
+
+- **검색 (Search)** : 수많은 대상 데이터 중에서 조건에 부합하는 데이터로 범위를 축소하는 행위
+
+- **Query DSL (Domain Specific Language)** : Elasticsearch에서 검색을 위해 제공되는 쿼리 기능. Elasticsearch의 Query DSL은 모두 **json** 형식으로 입력해야 한다.
+
+
+### 5-1. 풀 텍스트 쿼리 - Full Text Query
+
+Elasticsearch 는 데이터를 실제로 검색에 사용되는 검색어인 **텀(Term)** 으로 분석 과정을 거쳐 저장하기 때문에 검색 시 대소문자, 단수나 복수, 원형 여부와 상관 없이 검색이 가능하다. 이를 **풀 텍스트 검색 (Full Text Search)** 라고 한다.
+
+#### match_all
+
+별다른 조건 없이 해당 인덱스의 모든 도큐먼트를 검색하는 쿼리
+
+검색시 쿼리를 넣지 않으면 elasticsearch는 자동으로 match_all을 적용한다.
+
+```javascript
+GET my_index/_search
+{
+    "query":{
+        "match_all":{ }
+    }
+}
+```
+
+#### match
+
+풀 텍스트 검색에 사용되는 가장 일반적인 쿼리
+
+- match 쿼리로 message 필드에서 dog 검색
+
+    ```javascript
+    GET my_index/_search
+    {
+        "query": {
+            "match": {
+                "message": "dog"
+            }
+        }
+    }
+    ```
+
+- match 검색에 여러 개의 검색어를 집어넣게 되면 디폴트로 OR 조건으로 검색된다.
+
+- match 쿼리로 message 필드에서 quick dog 검색
+
+    ```javascript
+    GET my_index/_search
+    {
+        "query": {
+            "match": {
+                "message": "quick dog"
+            }
+        }
+    }
+    ```
+
+- 검색어가 여럿일 때 검색 조건을 OR가 아닌 AND로 바꾸려면 operator 옵션을 사용한다.
+
+- match 쿼리 AND 조건으로 quick dog 검색
+
+    ```javascript
+    GET my_index/_search
+    {
+        "query": {
+            "match": {
+                "message": {
+                    "query": "quick dog",
+                    "operator": "and"
+                }
+            }
+        }
+    }
+    ```
+
+#### match_phrase
+
+입력된 검색어를 순서까지 고려하여 검색을 수행하는 쿼리 (공백까지 정확하게 검색)
+
+- match_phrase 쿼리로 "lazy dog" 구문 검색
+
+    ```javascript
+    GET my_index/_search
+    {
+        "query": {
+            "match_phrase": {
+                "message": "lazy dog"
+            }
+        }
+    }
+    ```
+
+- ```slop``` 이라는 옵션을 이용하면 지정된 값 만큼 단어 사이에 다른 검색어가 끼어드는 것을 허용할 수 있다.
+
+- slop을 너무 크게 하면 검색 범위가 넓어져 관련이 없는 결과가 나타날 확률도 높아지기 때문에 1 이상은 사용하지 않는 것을 권장한다.
+
+- match_phrase 쿼리에 slop:1 로 "lazy dog" 구문 검색
+
+    ```javascript
+    GET my_index/_search
+    {
+        "query": {
+            "match_phrase": {
+                "message": {
+                    "query": "lazy dog",
+                    "slop": 1
+                }
+            }
+        }
+    }
+    ```
+
+#### query_string
+
+URL검색에 사용하는 루씬의 검색 문법을 본문 검색에 이용하고 싶을 때 사용하는 쿼리
+
+- message 필드에서 lazy와 jumping을 모두 포함하거나 또는 "quick dog" 구문을 포함하는 도큐먼트를 검색
+
+    ```javascript
+    GET my_index/_search
+    {
+        "query": {
+            "query_string": {
+                "default_field": "message",
+                "query": "(jumping AND lazy) OR \"quick dog\""
+            }
+        }
+    }
+    ```
+
+
+### 5-2. Bool 복합 쿼리 - Bool Query
+
+본문 검색에서 여러 쿼리를 조합하기 위해서는 상위에 bool 쿼리를 사용하고 그 안에 다른 쿼리들을 넣는 식으로 사용이 가능하다.
+
+- bool 쿼리
+
+    - must : 쿼리가 참인 도큐먼트들을 검색 
+
+    - must_not : 쿼리가 거짓인 도큐먼트들을 검색
+
+    - should : 검색 결과 중 이 쿼리에 해당하는 도큐먼트의 점수를 높임
+
+    - filter : 쿼리가 참인 도큐먼트를 검색하지만 스코어를 계산하지 않는다. must 보다 검색 속도가 빠르고 캐싱이 가능하다.
+
+    ```javascript
+    GET <인덱스명>/_search
+    {
+        "query": {
+            "bool": {
+                "must": [
+                    { <쿼리> }, …
+                ],
+                "must_not": [
+                    { <쿼리> }, …
+                ],
+                "should": [
+                    { <쿼리> }, …
+                ],
+                "filter": [
+                    { <쿼리> }, …
+                ]
+            }
+        }
+    }
+    ```
+
 
 
 ## 6. 데이터 색인과 텍스트 분석
 
+
 ### 6-1. 역 인덱스 - Inverted Index
 
-- **역 인덱스**는 책의 맨 뒤에 있는 주요 키워드에 대한 내용이 몇 페이지에 있는지 볼 수 있는 찾아보기 페이지에 비유할 수 있습니다.
+- **역 인덱스 (inverted index)** : 키워드를 통해 문서를 찾아내는 방식
 
-- Elasticsearch에서는 추출된 각 키워드를 **텀(term)** 이라고 부른다.
+- **텀 (term)** : 추출된 각 키워드
 
 - 역 인덱스를 데이터가 저장되는 과정에서 만들기 때문에 Elasticsearch는 데이터를 입력할 때 저장이 아닌 **색인**을 한다고 표현한다.
 
     <img width="640" alt="inverted_index" src="https://user-images.githubusercontent.com/55284181/123575354-848d6c00-d80c-11eb-83a9-691ae64c1730.png">
+
 
 ### 6-2. 텍스트 분석 - Text Analysis
 
@@ -349,7 +529,7 @@
 
 - **텍스트 분석 (Text Analysis)** : 문자열 필드가 저장될 때 데이터에서 검색어 토큰을 저장하기 위해 거치는 여러 단계의 처리 과정
 
-- **애널라이저 (Analyzer)** : 텍스트 분석을 처리하는 기능. 캐릭터 필터 (0~3개) -> 토크나이저 (1개) -> 토큰필터 (0~n개)
+- **애널라이저 (Analyzer)** : 텍스트 분석을 처리하는 기능. 캐릭터 필터 (0 ~ 3개) -> 토크나이저 (1개) -> 토큰필터 (0 ~ n개)
 
     <img width="640" alt="analyzer" src="https://user-images.githubusercontent.com/55284181/123585803-c0c9c800-d81e-11eb-8889-4e986d79b90b.png">
 
@@ -363,3 +543,10 @@
         - 영어에서는 ```snowball  ``` 토큰 필터를 이용하여 문법상 변형된 단어를 일반적으로 검색에 쓰이는 기본 형태로 변환하여 검색이 가능하게 한다.
         - ```synonym``` 토큰 필터를 사용하여 동의어를 추가해줄 수 있다.
 
+
+
+
+
+---
+#### 참조 URL
+- <https://the-dev.tistory.com/30>
