@@ -2,45 +2,79 @@
 
 #### 컨테이너 관련 명령어
 - container 조회
+    ```shell
     docker ps -a
+    ```
 - container 접속
+    ```shell
     docker exec -it [CONTAINER ID] /bin/bash
+    ```
 - container 접속 종료
+    ```shell
     exit
+    ```
 - 실행중인 container 종료
+    ```shell
     docker stop [CONTAINER ID]
+    ```
 - 종료된 container 삭제
+    ```shell
     docker rm [CONTAINER ID]
+    ```
 - 현재 실행중인 모든 container 종료
+    ```shell
     docker stop $(docker ps -q -f status=running)
+    ```
 - 종료된 모든 container 삭제
+    ```shell
     docker rm $(docker ps -q -f status=exited)
+    ```
 
 #### 이미지 관련 명령어
 - image 조회
+    ```shell
     docker images -a
+    ```
 - image 정보 출력
+    ```shell
     docker inspect [IMAGE ID]
+    ```
 - image 삭제
+    ```shell
     docker rmi [IMAGE ID]
+    ```
 - 모든 image 삭제 (주의, 다 날라감)
+    ```shell
     docker rmi $(docker images -q)
+    ```
 
 #### 볼륨 관련 명령어
 - volume 조회
+    ```shell
     docker volume ls
+    ```
 - volume 삭제
+    ```shell
     docker volume rm [VOLUME NAME]
+    ```
 - 모든 volume 삭제
+    ```shell
     docker volume rm $(docker volume ls -qf dangling=true)
+    ```
     
 #### 네트워크 관련 명령어
 - network 리스트 조회
+    ```shell
     docker network ls
+    ```
 - network 조회
+    ```shell
     docker network inspect [NETWORK NAME]
+    ```
 - network disconnect
+    ```shell
     docker network disconnect [NETWORK NAME] [CONTAINER NAME]
+    ```
 		
 ---
 ##### reference
