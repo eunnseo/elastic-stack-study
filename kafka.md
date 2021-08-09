@@ -238,7 +238,85 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
 
 
 
+## 6. 카프카 개발환경 구축 및 실행
+
+#### Install
+- Install jdk
+    ```shell
+    $ sudo apt install default-jdk
+    ```
+
+- Download latest Apache Kafka
+    [official download website](https://kafka.apache.org/downloads)
+    ```shell
+    $ wget https://mirror.navercorp.com/apache/kafka/2.8.0/kafka_2.13-2.8.0.tgz
+    $ tar xzf kafka_2.13-2.8.0.tgz
+    $ sudo mv kafka_2.13-2.8.0 /usr/local/
+    ```
+
+#### Run
+- Run zookeeper
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/zookeeper-server-start.sh config/zookeeper.properties
+    ```
+
+- Run Kafka
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/kafka-server-start.sh config/server.properties
+    ```
+
+#### Kafka Topic
+- Create Topic
+    Topic named "bigdata" with 5 partitions
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 5 --topic bigdata
+    ```
+    + --bootstrap-server : kafka 주소
+    + --zookeeper : zookeeper 주소
+    + --replication-factor : broker에 복사되는 개수 (안정성 증가) 단일서버라면 1개
+    + --partitions : partition 개수
+    + --topic : topic 이름
+
+- Check Topic list
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/kafka-topics.sh --list --bootstrap-server localhost:9092
+    ```
+
+- Check Topic details
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic bigdata
+    ```
+
+#### Exercise
+- Run python producing code
+    ```shell
+    $ python3 kafka_producer.py
+    ```
+
+- Check by kafka consumer
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic bigdata --from-beginning
+    ```
+    + --from-beginning : 처음부터 소비하겠다는 옵션
+
+- Run python consuming code
+    ```shell
+    $ python3 kafka_consumer.py
+    ```
+
+
+
+
 ---
-##### 참조
+##### reference
 - [카프카 메시지와 토픽과 파티션](https://always-kimkim.tistory.com/entry/kafka101-message-topic-partition)
 - [카프카 브로커](https://always-kimkim.tistory.com/entry/kafka101-broker)
+- [How to Install Apache Kafka on Ubuntu 20.04](https://tecadmin.net/how-to-install-apache-kafka-on-ubuntu-20-04/)
+- [Kafka 따라해보기 - 1 (설치하기 및 실행하기)](https://hyanghope.tistory.com/548?category=1075240)
+- [Kafka 따라해보기 - 2 (Python3로 간단히 code 짜보기))](https://hyanghope.tistory.com/549?category=1075240)
