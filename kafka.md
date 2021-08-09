@@ -319,4 +319,5 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
 - [카프카 브로커](https://always-kimkim.tistory.com/entry/kafka101-broker)
 - [How to Install Apache Kafka on Ubuntu 20.04](https://tecadmin.net/how-to-install-apache-kafka-on-ubuntu-20-04/)
 - [Kafka 따라해보기 - 1 (설치하기 및 실행하기)](https://hyanghope.tistory.com/548?category=1075240)
-- [Kafka 따라해보기 - 2 (Python3로 간단히 code 짜보기))](https://hyanghope.tistory.com/549?category=1075240)
+- [Kafka 따라해보기 - 2 (Python3로 간단히 code 짜보기)](https://hyanghope.tistory.com/549?category=1075240) - confluent_kafka 모듈 사용
+- [Python으로 Kafka에 전송(Producer)하고 가져오기(consumer)](https://needjarvis.tistory.com/607) - kafka 모듈 사용
