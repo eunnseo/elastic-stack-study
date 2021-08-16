@@ -242,12 +242,16 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
 
 #### Install
 - Install jdk
+
     ```shell
     $ sudo apt install default-jdk
     ```
 
 - Download latest Apache Kafka
+
     [official download website](https://kafka.apache.org/downloads)
+
+    Please run commands according to your version
     ```shell
     $ wget https://mirror.navercorp.com/apache/kafka/2.8.0/kafka_2.13-2.8.0.tgz
     $ tar xzf kafka_2.13-2.8.0.tgz
@@ -256,12 +260,14 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
 
 #### Run
 - Run zookeeper
+
     ```shell
     $ cd /usr/local/kafka_2.13-2.8.0/
     $ ./bin/zookeeper-server-start.sh config/zookeeper.properties
     ```
 
 - Run Kafka
+
     ```shell
     $ cd /usr/local/kafka_2.13-2.8.0/
     $ ./bin/kafka-server-start.sh config/server.properties
@@ -269,7 +275,8 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
 
 #### Kafka Topic
 - Create Topic
-    Topic named "bigdata" with 5 partitions
+
+    Topic named "bigdata" with 5 partitions and 1 replication
     ```shell
     $ cd /usr/local/kafka_2.13-2.8.0/
     $ ./bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 5 --topic bigdata
@@ -281,31 +288,47 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
     + --topic : topic 이름
 
 - Check Topic list
+
     ```shell
     $ cd /usr/local/kafka_2.13-2.8.0/
     $ ./bin/kafka-topics.sh --list --bootstrap-server localhost:9092
     ```
 
 - Check Topic details
+
     ```shell
     $ cd /usr/local/kafka_2.13-2.8.0/
-    $ ./bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic bigdata
+    $ ./bin/kafka-topics.sh --describe --bootstrap-server localhost:9092 --topic {topic name}
+    ```
+
+- Remove Topic
+
+    Add the following to ```./config/server.properties```:
+    ```shell
+    delete.topic.enable = true
+    ```
+    ```shell
+    $ cd /usr/local/kafka_2.13-2.8.0/
+    $ ./bin/kafka-topics.sh --zookeeper localhost:2181 --delete --topic {topic name}
     ```
 
 #### Exercise
 - Run python producing code
+
     ```shell
     $ python3 kafka_producer.py
     ```
 
 - Check by kafka consumer
+
     ```shell
     $ cd /usr/local/kafka_2.13-2.8.0/
-    $ ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic bigdata --from-beginning
+    $ ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic {topic name} --from-beginning
     ```
     + --from-beginning : 처음부터 소비하겠다는 옵션
 
 - Run python consuming code
+
     ```shell
     $ python3 kafka_consumer.py
     ```
@@ -321,3 +344,4 @@ Consumer 는 **토픽의 파티션에 저장된 데이터를 가져오는 역할
 - [Kafka 따라해보기 - 1 (설치하기 및 실행하기)](https://hyanghope.tistory.com/548?category=1075240)
 - [Kafka 따라해보기 - 2 (Python3로 간단히 code 짜보기)](https://hyanghope.tistory.com/549?category=1075240) - confluent_kafka 모듈 사용
 - [Python으로 Kafka에 전송(Producer)하고 가져오기(consumer)](https://needjarvis.tistory.com/607) - kafka 모듈 사용
+- [Topic 내의 message 지우는 방법](https://eyeballs.tistory.com/339)
